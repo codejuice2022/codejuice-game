@@ -1,0 +1,2 @@
+export const SET_CANVAS_OPTION = 'SET_CANVAS_OPTION'
+export const GET_GAME_LOG = 'GET_GAME_LOG'
