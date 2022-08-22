@@ -1,200 +1,268 @@
 <html>
 
 <head>
-  <title>test..</title>
+  <title>picking game</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="initial-scale=1.0, maximum-scale=1.0">
+
+
+  <script src="./game.js"></script>
+
+  <style>
+    :root {
+      --ui-padding: 50px;
+      --pick-button-size: 80px;
+      --quest-list-size: 200px;
+    }
+
+    body {
+      position: relative;
+      overflow: hidden;
+      background-color: #768d8f;
+    }
+
+    .canvasWrap {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      width: calc(100vh * 21 / 9);
+      height: 100vh;
+      margin: 0 auto;
+    }
+
+    .canvasWrap canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+
+    .canvasWrap canvas#canvas {
+      pointer-events: all;
+    }
+
+    #pick-button {
+      position: absolute;
+      width: var(--pick-button-size);
+      height: var(--pick-button-size);
+      border-radius: 50%;
+      bottom: var(--ui-padding);
+      left: var(--ui-padding);
+      padding: 0;
+      border: none;
+      background-color: #222;
+      transition: .2s background-color;
+      color: #fff;
+    }
+
+    #pick-button:active {
+      background-color: #555;
+    }
+
+    #ui-quest {
+      pointer-events: none;
+      box-sizing: border-box;
+      position: absolute;
+      top: 50%;
+      right: 0;
+      height: 80%;
+      width: var(--quest-list-size);
+      background-color: rgba(0, 0, 0, .4);
+      transform: translateY(-50%);
+      border-radius: 20px 0 0 20px;
+      padding: 20px 0 20px 30px;
+      overflow: auto;
+    }
+
+    #ui-quest li {
+      font-family: sans-serif;
+      color: #fff;
+    }
+
+    #ui-quest li+li {
+      margin-top: 10px;
+    }
+
+    #ui-quest.success li {
+      color: greenyellow
+    }
+
+    #ui-quest.overload li {
+      color: red;
+    }
+
+    .scoreBoardWrap {
+      pointer-events: none;
+      position: absolute;
+      left: var(--ui-padding);
+      top: var(--ui-padding);
+      color: #555;
+      font-family: sans-serif;
+      font-size: 20px;
+    }
+
+    .scoreBoardWrap span {
+      font-size: 23px;
+      font-weight: bold;
+    }
+
+    .timerWrap {
+      opacity: .7;
+      pointer-events: none;
+      position: absolute;
+      bottom: calc(var(--ui-padding) + var(--pick-button-size) / 2 - 25px);
+      left: calc(var(--ui-padding) + var(--pick-button-size) + 20px);
+      right: calc(var(--quest-list-size) + 20px);
+      height: 50px;
+      border: 8px solid #222;
+      box-sizing: border-box;
+      border-radius: 25px;
+      overflow: hidden;
+    }
+
+    .timerWrap div#timer {
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(0deg, rgba(13, 8, 101, 1) 0%, rgba(9, 9, 121, 1) 35%, rgba(0, 212, 255, 1) 100%);
+    }
+  </style>
 </head>
 
+
 <body style="margin: 0">
-  <img src="./GC.png" />
-  <canvas id="canvas" style="width: calc(100vh * 16 / 10); height: 100vh; display: block;"></canvas>
+  <div class="canvasWrap">
+    <canvas id="canvas"></canvas>
+    <canvas id="map-canvas"></canvas>
+
+  </div>
+
+  <p class="scoreBoardWrap">SCORE: <span id="score-board"></span></p>
+  <ul id="ui-quest"></ul>
+  <button id="pick-button" onClick="handleButton()">pick</button>
+
+  <div class="timerWrap">
+    <div id="timer"></div>
+  </div>
 </body>
 
 </html>
 
 <script>
-  const colCheck = (shapeA, shapeB) => {
-    // get the vectors to check against
-    var vX = (shapeA.x + (shapeA.width / 2)) - (shapeB.x + (shapeB.width / 2)),
-      vY = (shapeA.y + (shapeA.height / 2)) - (shapeB.y + (shapeB.height / 2)),
-      // add the half widths and half heights of the objects
-      hWidths = (shapeA.width / 2) + (shapeB.width / 2),
-      hHeights = (shapeA.height / 2) + (shapeB.height / 2),
-      colDir = null;
+  CanvasRenderingContext2D.prototype.roundRect = function (x, y, width, height, radius) {
+    if (width < 2 * radius) radius = width / 2;
+    if (height < 2 * radius) radius = height / 2;
+    this.beginPath();
+    this.moveTo(x + radius, y);
+    this.arcTo(x + width, y, x + width, y + height, radius);
+    this.arcTo(x + width, y + height, x, y + height, radius);
+    this.arcTo(x, y + height, x, y, radius);
+    this.arcTo(x, y, x + width, y, radius);
+    this.closePath();
 
-    // if the x and y vector are less than the half width or half height, they we must be inside the object, causing a collision
-    if (Math.abs(vX) < hWidths && Math.abs(vY) < hHeights) {
-      // figures out on which side we are colliding (top, bottom, left, or right)
-      var oX = hWidths - Math.abs(vX),
-        oY = hHeights - Math.abs(vY);
-      if (oX >= oY) {
-        if (vY < 0) {
-          colDir = "b";
-          shapeA.y -= oY;
-        }
-      } else {
-        if (vX > 0) {
-          colDir = "l";
-          shapeA.x += oX;
-        } else {
-          colDir = "r";
-          shapeA.x -= oX;
-        }
-      }
-    }
-    return colDir;
+    return this;
   }
 
-  const playGame = (_map) => {
+  let game = null
 
-    const width = 1600;
-    const height = 1000;
-    const tileSize = 150;
-    const platformHeight = 15;
-
-    const platform = [];
-    const items = [];
-
-    _map.forEach((line, lineIndex) => {
-
-      line.forEach((tile, tileIndex) => {
-        switch (tile) {
-          case 1:
-            const prevTile = line[tileIndex - 1];
-
-            if (prevTile === 1) {
-              platform[platform.length - 1] = {
-                ...platform[platform.length - 1],
-                width: platform[platform.length - 1].width + tileSize,
-              }
-            } else {
-              platform.push({//box for the ground
-                x: tileSize * tileIndex,
-                y: (lineIndex + 1) * (height / _map.length) - platformHeight,
-                width: tileSize,
-                height: platformHeight,
-                color: 'orange',
-                type: 'platform'
-              });
-            }
-            break;
-
-          default:
-            break;
-        }
-      })
-    });
-
-    const canvas = document.getElementById("canvas"),
-      boxSpeed = 2,
-      ctx = canvas.getContext("2d"),
-      player = {
-        x: 30,
-        y: 200,
-        width: 80,
-        height: 150,
-        jumSize: 15,
-        velX: 0,
-        velY: 0,
-        jumping: false,
-        grounded: false,
-        color: '#E6AC27'
-      },
-      keys = [],
-      friction = 0.8,
-      gravity = 0.4,
-      boxes = [],
-      powerup = [];
-
-    // dimensions
-    boxes.push({//box for the ground
-      x: 0,
-      y: height - 10,
-      width: width,
-      height: 50,
-      color: 'orange',
-      type: 'ground'
-    });
-
-    boxes.push({
-      x: 290,
-      y: 200,
-      width: 260,
-      height: 10,
-      color: 'blue'
-    });
-
-    canvas.width = width;
-    canvas.height = height;
-
-    function update() {
-      // check keys
-      if (keys[38] || keys[32] || keys[87]) {
-        // up arrow or space
-        if (!player.jumping && player.grounded) {
-          player.jumping = true;
-          player.grounded = false;
-          player.velY = -player.jumSize
-        }
+  const imageInfo = {
+    size: 64,
+    posIndex: {
+      wall: { x: 8, y: 7 },
+      floor: { x: 11, y: 6 },
+      item2: { x: 6, y: 0 },
+      item3: { x: 7, y: 0 },
+      item4: { x: 8, y: 0 },
+      item5: { x: 9, y: 0 },
+      item6: { x: 10, y: 0 },
+      item9: { x: 11, y: 0 },
+      player: {
+        t: { x: 3, y: 5 },
+        tWalk: [{ x: 4, y: 5 }, { x: 5, y: 5 }, { x: 4, y: 5 }, { x: 5, y: 5 }],
+        b: { x: 0, y: 5 },
+        bWalk: [{ x: 1, y: 5 }, { x: 2, y: 5 }, { x: 1, y: 5 }, { x: 2, y: 5 }],
+        l: { x: 3, y: 7 },
+        lWalk: [{ x: 3, y: 7 }, { x: 4, y: 7 }, { x: 3, y: 7 }, { x: 5, y: 7 }],
+        r: { x: 0, y: 7 },
+        rWalk: [{ x: 0, y: 7 }, { x: 1, y: 7 }, { x: 0, y: 7 }, { x: 2, y: 7 }],
       }
+    }
+  }
 
-      ctx.clearRect(0, 0, width, height);
-      ctx.beginPath();
+  const _spriteImage = new Image()
+  _spriteImage.src = './assets/sprite.png'
 
-      player.grounded = false;
+  const dummyMap = [
+    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 9, 1],
+    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+    [1, 0, 2, 2, 2, 0, 0, 0, 0, 3, 3, 3, 0, 0, 0, 0, 1],
+    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+    [1, 0, 4, 4, 4, 0, 0, 0, 0, 6, 6, 6, 0, 0, 0, 0, 1],
+    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+    [1, 0, 5, 5, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+  ]
 
-      for (var i = 0; i < platform.length; i++) {//print platform
-        ctx.fillStyle = platform[i].color;
+  const handleButton = () => {
+    const { purchaseList, status, score } = game.pickItem();
 
-        const boxX = platform[i].x -= boxSpeed
-        ctx.rect(boxX, platform[i].y, platform[i].width, platform[i].height);
+    drawQuest(purchaseList, status, score);
+  }
 
-        if (player.velY > 0) {
-          var dir = colCheck(player, platform[i]);
+  const drawQuest = (_purchaseList, _status, _score = 0) => {
+    const questUI = document.getElementById('ui-quest')
 
-          if (dir === "b") {
-            player.grounded = true;
-            player.jumping = false;
-          }
-        }
-      }
+    let _questListItemHTML = _purchaseList
+      .map(({ name, pickCount, count }) => `<li>${name} ( ${pickCount} / ${count} )</li>`)
+      .join('')
 
-      if (player.grounded) {
-        player.velY = 0;
-      } else {
-        player.velY += gravity;
-      }
+    questUI.innerHTML = _questListItemHTML
 
-      player.x += player.velX;
-      player.y += player.velY;
+    switch (_status) {
+      case 'overload':
+      case 'success':
+        questUI.classList.add(_status);
+        break;
 
-      ctx.fill();//Draw charater stuff
-      ctx.fillStyle = player.color;
-      ctx.fillRect(player.x, player.y, player.width, player.height);
-
-      //draw powerup stuff 
-      for (var j = 0; j < powerup.length; j++) {
-        ctx.save();
-        ctx.fillStyle = powerup[j].color;
-        ctx.fillRect(powerup[j].x, powerup[j].y, powerup[j].width, powerup[j].height);
-        ctx.restore();
-      }
-      //powerup stuff
-
-      requestAnimationFrame(update);
+      default:
+        questUI.className = ''
+        break;
     }
 
-    update();
+    document.getElementById('score-board').innerText = _score
+  }
 
+  const clearGame = (_score) => {
+    console.log('clear_score!', _score)
+  }
+
+  const playGame = (_map = dummyMap) => {
+    game = new TopViewGame(document.getElementById('canvas'), document.getElementById('map-canvas'), document.getElementById('timer'), _map, _spriteImage, imageInfo, clearGame)
+
+    const _purchaseList = game.startGame()
+
+    drawQuest(_purchaseList);
   }
 
   const SET_CANVAS_OPTION = 'SET_CANVAS_OPTION'
   const GET_GAME_LOG = 'GET_GAME_LOG'
 
-  const sendLog = (_message) => {
+  const sendMessage = (_type, _message) => {
     if (window.ReactNativeWebView) {
       window.ReactNativeWebView.postMessage(
         JSON.stringify({
-          type: GET_GAME_LOG,
+          type: _type,
           message: _message
         })
       );
@@ -219,4 +287,8 @@
   document.addEventListener('message', rnListener);
   /** ios */
   window.addEventListener('message', rnListener);
+
+  if (!window.ReactNativeWebView) {
+    playGame();
+  }
 </script>

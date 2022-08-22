@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react'
-import { Dimensions } from 'react-native'
+import { Dimensions, View } from 'react-native'
 
 import WebView, { WebViewMessageEvent } from 'react-native-webview'
 import styled from 'styled-components/native'
@@ -48,7 +48,13 @@ const PickingGameCanvas = () => {
   }
 
   return (
-    <>
+    <View
+      style={{
+        width: '100%',
+        height: '100%',
+        backgroundColor: '#768d8f',
+      }}
+    >
       <StyledWebview
         ref={webviewRef}
         onMessage={handleOnMessage}
@@ -57,7 +63,7 @@ const PickingGameCanvas = () => {
         originWhitelist={['*']}
         canvasWidth={Math.floor(windowHeight * gameScreenRatio)}
       />
-    </>
+    </View>
   )
 }
 
