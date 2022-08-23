@@ -1,6 +1,7 @@
-export type RouteList = 'Intro' | 'PickingStep';
+export type RouteList = 'IntroStep' | 'PickingStep' | 'EndStep'
 
 export type RootStackParamList = {
-  Intro: undefined;
-  PickingStep: undefined;
-};
+  IntroStep: undefined
+  PickingStep: undefined
+  EndStep: undefined
+}

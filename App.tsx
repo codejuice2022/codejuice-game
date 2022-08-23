@@ -10,8 +10,6 @@ import Router from './Router'
 import SystemNavigationBar from 'react-native-system-navigation-bar'
 
 const App = () => {
-  SystemNavigationBar.stickyImmersive()
-
   return (
     <>
       <StatusBar hidden />

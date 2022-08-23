@@ -1,7 +1,7 @@
 import { Picker } from '@react-native-picker/picker'
 import { useNavigation } from '@react-navigation/native'
 import { StackNavigationProp } from '@react-navigation/stack'
-import React, { useMemo, useRef, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { Alert, View } from 'react-native'
 import PhoneInput from 'react-native-phone-number-input'
 import { useDispatch } from 'react-redux'

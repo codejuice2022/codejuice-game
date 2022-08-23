@@ -1,25 +1,23 @@
-import React, { useEffect, useRef } from 'react'
-import { Dimensions, View } from 'react-native'
+import React, { useRef } from 'react'
+import { View, Alert } from 'react-native'
 
 import WebView, { WebViewMessageEvent } from 'react-native-webview'
-import styled from 'styled-components/native'
-import { SET_CANVAS_OPTION, GET_GAME_LOG } from '~/consts/web-view-message-type'
+import { CLEAR_GAME, GET_GAME_LOG, SET_CANVAS_OPTION } from '~/consts/web-view-message-type'
+import { setGameScore } from '~/core/redux/slices/globalSlice'
 
+import { useDispatch } from 'react-redux'
 import gameMap from '~/utils/picking-game/picking-game-map.json'
 
 interface StyleProps {
   canvasWidth: number
 }
-const StyledWebview = styled(WebView)<StyleProps>`
-  width: ${(props) => props.canvasWidth}px;
-  height: 100%;
-  border: 1px solid red;
-`
-const PickingGameCanvas = () => {
-  const webviewRef = useRef<WebView>(null)
 
-  const windowHeight = Dimensions.get('window').height
-  const gameScreenRatio = 16 / 10
+interface Props {
+  moveToNextStep: () => void
+}
+const PickingGameCanvas = ({ moveToNextStep }: Props) => {
+  const dispatch = useDispatch()
+  const webviewRef = useRef<WebView>(null)
 
   const sendGameOption = () => {
     if (webviewRef.current) {
@@ -41,6 +39,10 @@ const PickingGameCanvas = () => {
       case GET_GAME_LOG:
         console.log(onMsgParam.message)
         break
+      case CLEAR_GAME:
+        dispatch(setGameScore(onMsgParam.message))
+
+        moveToNextStep()
 
       default:
         break
@@ -55,13 +57,12 @@ const PickingGameCanvas = () => {
         backgroundColor: '#768d8f',
       }}
     >
-      <StyledWebview
+      <WebView
         ref={webviewRef}
         onMessage={handleOnMessage}
         onLoad={sendGameOption}
         source={{ uri: 'file:///android_asset/game/index.html' }}
         originWhitelist={['*']}
-        canvasWidth={Math.floor(windowHeight * gameScreenRatio)}
       />
     </View>
   )

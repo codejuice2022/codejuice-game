@@ -4,21 +4,23 @@
   <title>picking game</title>
   <meta charset="utf-8">
   <meta name="viewport" content="initial-scale=1.0, maximum-scale=1.0">
-
-
   <script src="./game.js"></script>
 
   <style>
     :root {
-      --ui-padding: 50px;
+      --ui-padding: 20px;
       --pick-button-size: 80px;
-      --quest-list-size: 200px;
+      --quest-list-size: 150px;
     }
 
     body {
-      position: relative;
+      position: fixed;
       overflow: hidden;
       background-color: #768d8f;
+      left: 0;
+      right: 0;
+      top: 0;
+      bottom: 0;
     }
 
     .canvasWrap {
@@ -56,6 +58,7 @@
       background-color: #222;
       transition: .2s background-color;
       color: #fff;
+      user-select: none;
     }
 
     #pick-button:active {
@@ -72,7 +75,7 @@
       width: var(--quest-list-size);
       background-color: rgba(0, 0, 0, .4);
       transform: translateY(-50%);
-      border-radius: 20px 0 0 20px;
+      border-radius: 20px;
       padding: 20px 0 20px 30px;
       overflow: auto;
     }
@@ -80,6 +83,8 @@
     #ui-quest li {
       font-family: sans-serif;
       color: #fff;
+      font-size: 12px;
+      user-select: none;
     }
 
     #ui-quest li+li {
@@ -101,11 +106,12 @@
       top: var(--ui-padding);
       color: #555;
       font-family: sans-serif;
-      font-size: 20px;
+      font-size: 13px;
+      user-select: none;
     }
 
     .scoreBoardWrap span {
-      font-size: 23px;
+      font-size: 15px;
       font-weight: bold;
     }
 
@@ -113,10 +119,10 @@
       opacity: .7;
       pointer-events: none;
       position: absolute;
-      bottom: calc(var(--ui-padding) + var(--pick-button-size) / 2 - 25px);
+      bottom: calc(var(--ui-padding) + var(--pick-button-size) / 2 - 5px);
       left: calc(var(--ui-padding) + var(--pick-button-size) + 20px);
       right: calc(var(--quest-list-size) + 20px);
-      height: 50px;
+      height: 30px;
       border: 8px solid #222;
       box-sizing: border-box;
       border-radius: 25px;
@@ -165,6 +171,36 @@
     return this;
   }
 
+  const SET_CANVAS_OPTION = 'SET_CANVAS_OPTION'
+  const GET_GAME_LOG = 'GET_GAME_LOG'
+  const CLEAR_GAME = 'CLEAR_GAME'
+
+  const sendMessage = (_type, _message) => {
+    window.ReactNativeWebView.postMessage(
+      JSON.stringify({
+        type: _type,
+        message: _message
+      })
+    )
+  }
+
+  const rnListener = (event) => {
+    const parseData = JSON.parse(event.data);
+
+    switch (parseData.type) {
+      case SET_CANVAS_OPTION:
+        playGame(parseData.data.map);
+        break;
+
+      default:
+        break;
+    }
+  }
+
+  document.addEventListener('message', rnListener);
+  /** ios */
+  window.addEventListener('message', rnListener);
+
   let game = null
 
   const imageInfo = {
@@ -193,26 +229,6 @@
 
   const _spriteImage = new Image()
   _spriteImage.src = './assets/sprite.png'
-
-  const dummyMap = [
-    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 9, 1],
-    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-    [1, 0, 2, 2, 2, 0, 0, 0, 0, 3, 3, 3, 0, 0, 0, 0, 1],
-    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-    [1, 0, 4, 4, 4, 0, 0, 0, 0, 6, 6, 6, 0, 0, 0, 0, 1],
-    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-    [1, 0, 5, 5, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-  ]
 
   const handleButton = () => {
     const { purchaseList, status, score } = game.pickItem();
@@ -244,10 +260,12 @@
   }
 
   const clearGame = (_score) => {
-    console.log('clear_score!', _score)
+    alert('CLEAR!');
+
+    sendMessage(CLEAR_GAME, _score)
   }
 
-  const playGame = (_map = dummyMap) => {
+  const playGame = (_map) => {
     game = new TopViewGame(document.getElementById('canvas'), document.getElementById('map-canvas'), document.getElementById('timer'), _map, _spriteImage, imageInfo, clearGame)
 
     const _purchaseList = game.startGame()
@@ -255,40 +273,4 @@
     drawQuest(_purchaseList);
   }
 
-  const SET_CANVAS_OPTION = 'SET_CANVAS_OPTION'
-  const GET_GAME_LOG = 'GET_GAME_LOG'
-
-  const sendMessage = (_type, _message) => {
-    if (window.ReactNativeWebView) {
-      window.ReactNativeWebView.postMessage(
-        JSON.stringify({
-          type: _type,
-          message: _message
-        })
-      );
-    } else {
-      console.log(_message)
-    }
-  }
-
-  const rnListener = (event) => {
-    const parseData = JSON.parse(event.data);
-
-    switch (parseData.type) {
-      case SET_CANVAS_OPTION:
-        playGame(parseData.data.map);
-        break;
-
-      default:
-        break;
-    }
-  }
-
-  document.addEventListener('message', rnListener);
-  /** ios */
-  window.addEventListener('message', rnListener);
-
-  if (!window.ReactNativeWebView) {
-    playGame();
-  }
 </script>

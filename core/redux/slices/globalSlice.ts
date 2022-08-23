@@ -8,6 +8,7 @@ interface UserInfo {
 
 interface GlobalState {
   userInfo: UserInfo
+  gameScore: number
 }
 
 const initialState: GlobalState = {
@@ -16,6 +17,7 @@ const initialState: GlobalState = {
     center: '',
     phone: '',
   },
+  gameScore: 0,
 }
 
 const globalSlice = createSlice({
@@ -25,9 +27,12 @@ const globalSlice = createSlice({
     setUserInfo(state, action: PayloadAction<UserInfo>) {
       state.userInfo = action.payload
     },
+    setGameScore(state, action: PayloadAction<number>) {
+      state.gameScore = action.payload
+    },
   },
 })
 
-export const { setUserInfo } = globalSlice.actions
+export const { setUserInfo, setGameScore } = globalSlice.actions
 
 export default globalSlice.reducer

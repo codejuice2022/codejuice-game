@@ -400,13 +400,15 @@ class TopViewGame {
   }
 
   setMoveDir(evt) {
+    const touch = evt.touches[0];
+
     const rect = this.canvas.getBoundingClientRect(),
       scaleX = this.canvas.width / rect.width,
       scaleY = this.canvas.height / rect.height
 
     const mousePos = {
-      x: (evt.clientX - rect.left) * scaleX,
-      y: (evt.clientY - rect.top) * scaleY
+      x: (touch.clientX - rect.left) * scaleX,
+      y: (touch.clientY - rect.top) * scaleY
     }
 
     const rad = Math.atan2(this.height / 2 - mousePos.y, this.width / 2 - mousePos.x)
